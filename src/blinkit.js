@@ -106,7 +106,14 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
             console.log(`Blinkit: Found ${results.length} products so far...`);
             if (results.length >= maxItems) break;
 
-            await page.evaluate(() => window.scrollBy(0, 1500));
+            await page.evaluate(() => {
+                const cards = document.querySelectorAll('div[data-pf="reset"]');
+                if (cards.length > 0) {
+                    cards[cards.length - 1].scrollIntoView();
+                } else {
+                    window.scrollBy(0, 1500);
+                }
+            });
             await page.waitForTimeout(1500);
 
             const currentHeight = await page.evaluate(() => document.body.scrollHeight);
