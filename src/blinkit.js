@@ -65,7 +65,6 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
 
         console.log("Blinkit: Extracting products...");
 
-        let previousHeight = 0;
         let retries = 0;
         while (results.length < maxItems && retries < 15) {
             const products = await page.$$eval('div[data-pf="reset"]', (cards) => {
@@ -106,20 +105,21 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
             console.log(`Blinkit: Found ${results.length} products so far...`);
             if (results.length >= maxItems) break;
 
+            // Hover over the last product card to ensure our scroll context is correct
+            await page.locator('div[data-pf="reset"]').last().hover({ timeout: 2000 }).catch(() => { });
+
             // Use native Playwright inputs for more reliable scroll event firing
             await page.mouse.wheel(0, 3000);
             await page.keyboard.press('PageDown');
             await page.waitForTimeout(500);
             await page.keyboard.press('PageDown');
             await page.waitForTimeout(1500);
-            await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
-            const currentHeight = await page.evaluate(() => document.body.scrollHeight);
-            if (currentHeight === previousHeight) {
+            // Check if new products were appended rather than relying on body height
+            if (newAdded === 0) {
                 retries++;
             } else {
                 retries = 0;
-                previousHeight = currentHeight;
             }
         }
 
