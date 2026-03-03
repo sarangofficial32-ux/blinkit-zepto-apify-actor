@@ -2,13 +2,21 @@ import { chromium } from 'playwright';
 
 /**
  * Zepto scraper using the correct ?query= URL param (not ?q=).
- * The ?query= param returns 30+ products initially and loads 100+ via scroll.
+ * The ?query= param returns 30+ products initially and loads 100-200+ via scroll.
  */
-export async function scrapeZepto(searchQuery, maxItems) {
-    const browser = await chromium.launch({ headless: true });
+export async function scrapeZepto(searchQuery, maxItems, proxyUrl = null) {
+    const launchOptions = { headless: true };
+    if (proxyUrl) {
+        launchOptions.proxy = { server: proxyUrl };
+    }
+
+    const browser = await chromium.launch(launchOptions);
     const context = await browser.newContext({
         userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        viewport: { width: 1920, height: 1080 }
+        viewport: { width: 1920, height: 1080 },
+        locale: 'en-IN',
+        geolocation: { longitude: 72.8777, latitude: 19.0760 }, // Mumbai
+        permissions: ['geolocation'],
     });
     const page = await context.newPage();
     const results = [];
@@ -39,12 +47,12 @@ export async function scrapeZepto(searchQuery, maxItems) {
     }
 
     try {
-        // Set location first
+        // Set location via homepage UI
         console.log(`Zepto: Navigating to homepage to set location`);
         await page.goto(`https://www.zeptonow.com`, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
         try {
-            await page.waitForTimeout(2000);
+            await page.waitForTimeout(3000);
             const selectLocationBtn = await page.$('button:has-text("Select Location"), button[aria-label="Select Location"]');
             if (selectLocationBtn) {
                 await selectLocationBtn.click();
@@ -56,12 +64,14 @@ export async function scrapeZepto(searchQuery, maxItems) {
                     await page.keyboard.press('ArrowDown');
                     await page.keyboard.press('Enter');
                     await page.waitForTimeout(3000);
-                    console.log('Zepto: Location set.');
+                    console.log('Zepto: Location set to Mumbai.');
                 }
             }
-        } catch (e) { }
+        } catch (e) {
+            console.log('Zepto: Location set failed: ' + e.message);
+        }
 
-        // Use ?query= (NOT ?q=) - this returns all products with scroll pagination
+        // Use ?query= (NOT ?q=) - returns full paginated results
         const searchUrl = `https://www.zepto.com/search?query=${encodeURIComponent(searchQuery)}`;
         console.log(`Zepto: Navigating to ${searchUrl}`);
         await page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 60000 });
@@ -88,7 +98,7 @@ export async function scrapeZepto(searchQuery, maxItems) {
                 }
             }
 
-            if (results.length % 30 === 0 || newAdded > 0) {
+            if (newAdded > 0 || scrollCount % 5 === 0) {
                 console.log(`Zepto: Found ${results.length} products so far...`);
             }
 
