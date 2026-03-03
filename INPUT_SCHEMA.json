@@ -24,6 +24,12 @@
             "minimum": 1,
             "maximum": 500,
             "default": 300
+        },
+        "useProxy": {
+            "title": "Use Apify Residential Proxy",
+            "type": "boolean",
+            "description": "If true, uses Apify Residential Proxies to prevent blocking. Turn this OFF if you get tunnel connection errors (e.g. Zepto).",
+            "default": true
         }
     },
     "required": [

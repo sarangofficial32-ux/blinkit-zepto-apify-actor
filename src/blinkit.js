@@ -106,15 +106,13 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
             console.log(`Blinkit: Found ${results.length} products so far...`);
             if (results.length >= maxItems) break;
 
-            await page.evaluate(() => {
-                const cards = document.querySelectorAll('div[data-pf="reset"]');
-                if (cards.length > 0) {
-                    cards[cards.length - 1].scrollIntoView();
-                } else {
-                    window.scrollBy(0, 1500);
-                }
-            });
+            // Use native Playwright inputs for more reliable scroll event firing
+            await page.mouse.wheel(0, 3000);
+            await page.keyboard.press('PageDown');
+            await page.waitForTimeout(500);
+            await page.keyboard.press('PageDown');
             await page.waitForTimeout(1500);
+            await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
             const currentHeight = await page.evaluate(() => document.body.scrollHeight);
             if (currentHeight === previousHeight) {

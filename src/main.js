@@ -10,6 +10,7 @@ const {
     platforms = ['blinkit', 'zepto'],
     location = 'Connaught Place, New Delhi',
     maxItems = 250,
+    useProxy = true,
 } = input;
 
 if (!searchQuery) {
@@ -19,21 +20,25 @@ if (!searchQuery) {
 // Set up Apify RESIDENTIAL proxy with Indian IP
 // IMPORTANT: Playwright needs credentials split out separately from the URL
 let proxyConfig = null;
-try {
-    const proxyConfiguration = await Actor.createProxyConfiguration({
-        groups: ['RESIDENTIAL'],
-        countryCode: 'IN',
-    });
-    const proxyUrl = await proxyConfiguration.newUrl();
-    const parsed = new URL(proxyUrl);
-    proxyConfig = {
-        server: `${parsed.protocol}//${parsed.hostname}:${parsed.port}`,
-        username: decodeURIComponent(parsed.username),
-        password: decodeURIComponent(parsed.password),
-    };
-    console.log(`Using Apify RESIDENTIAL proxy: ${proxyConfig.server} (IN)`);
-} catch (e) {
-    console.log('No proxy configured (local dev mode):', e.message);
+if (useProxy) {
+    try {
+        const proxyConfiguration = await Actor.createProxyConfiguration({
+            groups: ['RESIDENTIAL'],
+            countryCode: 'IN',
+        });
+        const proxyUrl = await proxyConfiguration.newUrl();
+        const parsed = new URL(proxyUrl);
+        proxyConfig = {
+            server: `${parsed.protocol}//${parsed.hostname}:${parsed.port}`,
+            username: decodeURIComponent(parsed.username),
+            password: decodeURIComponent(parsed.password),
+        };
+        console.log(`Using Apify RESIDENTIAL proxy: ${proxyConfig.server} (IN)`);
+    } catch (e) {
+        console.log('No proxy configured (local dev mode):', e.message);
+    }
+} else {
+    console.log('Running without proxy (useProxy set to false).');
 }
 
 console.log(`Starting scrape for query: "${searchQuery}" on platforms: ${platforms.join(', ')} (maxItems: ${maxItems})`);
