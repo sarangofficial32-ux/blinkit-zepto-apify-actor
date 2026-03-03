@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { Actor } from 'apify';
 
 export async function scrapeZepto(searchQuery, maxItems, proxyConfig = null) {
     const launchOptions = { headless: true };
@@ -72,6 +73,10 @@ export async function scrapeZepto(searchQuery, maxItems, proxyConfig = null) {
         await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
         await page.waitForTimeout(3000);
 
+        // New: wait for either products or an obvious error element
+        await page.waitForSelector('a:has([data-slot-id="ProductName"])', { timeout: 15000 })
+            .catch(() => console.log('Zepto: Product selector not found within 15s'));
+
         let lastCount = 0;
         let noChangeRetries = 0;
         let scrollCount = 0;
@@ -107,8 +112,12 @@ export async function scrapeZepto(searchQuery, maxItems, proxyConfig = null) {
 
             await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
             await page.waitForTimeout(1500);
-            scrollCount++;
+            await scrollCount++;
         }
+
+        // Debugging for Apify
+        await Actor.setValue('ZEPTO_HTML', await page.content());
+        await page.screenshot({ path: 'zepto-final.png', fullPage: true });
 
     } catch (e) {
         console.error("Zepto scraping error: " + e.message);

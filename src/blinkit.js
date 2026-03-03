@@ -24,7 +24,7 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
     });
 
     // Block images and fonts to save memory – we still read img[src] from DOM attributes
-    await context.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf}', route => route.abort());
+    // await context.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf}', route => route.abort());
 
     const page = await context.newPage();
     const results = [];
@@ -117,6 +117,11 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
                 previousHeight = currentHeight;
             }
         }
+
+        // Debugging for Apify
+        await Actor.setValue('BLINKIT_HTML', await page.content());
+        await page.screenshot({ path: 'blinkit-final.png', fullPage: true });
+
     } catch (e) {
         console.error("Blinkit scraping error: " + e.message);
     } finally {
