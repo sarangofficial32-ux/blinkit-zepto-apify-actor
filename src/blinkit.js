@@ -69,10 +69,7 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
         while (results.length < maxItems && retries < 15) {
             const products = await page.$$eval('div[data-pf="reset"]', (cards) => {
                 return cards.map(c => {
-                    const imgs = Array.from(c.querySelectorAll('img'));
-                    let imageElem = imgs.find(img => (img.getAttribute('data-src') || img.src || '').includes('grofers'));
-                    if (!imageElem) imageElem = imgs[0];
-
+                    const imageElem = c.querySelector('img[alt]') || c.querySelector('img');
                     if (!imageElem && !(c.innerText || '').includes('ADD')) return null;
 
                     const name = c.querySelector(
@@ -86,7 +83,7 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
                         const txt = el.innerText ? el.innerText.trim() : '';
                         if (txt.startsWith('₹')) {
                             price = txt.split('\n')[0];
-                            if (price) break;
+                            break;
                         }
                     }
 
@@ -94,14 +91,14 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
                         'div.tw-text-200.tw-font-medium.tw-line-clamp-1, div.Product__UpdatedWeight-sc-11dk8zk-10'
                     )?.innerText?.trim() || 'No weight';
 
-                    const image = imageElem?.getAttribute('data-src') || imageElem?.src || '';
+                    const image = imageElem ? (imageElem.getAttribute('data-src') || imageElem.src || '') : '';
 
-                    let idStr = c.getAttribute('id');
-                    if (!idStr) {
-                        const childWithId = c.querySelector('[id]');
-                        if (childWithId) idStr = childWithId.getAttribute('id');
+                    let url = c.closest('a')?.href || '';
+                    if (!url) {
+                        const idNode = c.querySelector('[id]') || c;
+                        const idStr = idNode.getAttribute('id') || '';
+                        url = idStr ? `https://blinkit.com/prn/-/prid/${idStr}` : '';
                     }
-                    const url = idStr ? `https://blinkit.com/prn/-/prid/${idStr}` : '';
                     return { platform: 'Blinkit', name, price, weight, image, url };
                 }).filter(Boolean);
             });
