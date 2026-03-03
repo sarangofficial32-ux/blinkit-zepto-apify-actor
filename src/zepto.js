@@ -99,11 +99,10 @@ export async function scrapeZepto(searchQuery, maxItems, proxyConfig = null) {
 
             if (results.length >= maxItems) break;
 
-            if (newAdded === 0 && products.length === lastCount) {
+            if (newAdded === 0) {
                 noChangeRetries++;
             } else {
                 noChangeRetries = 0;
-                lastCount = products.length;
             }
 
             await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
