@@ -67,6 +67,6 @@ if (platforms.includes('zepto')) {
     }
 }
 
-await Actor.pushData(results);
+// Data is now pushed live from within the scraper functions
 console.log(`Scraping finished. Total items saved: ${results.length}`);
 await Actor.exit();

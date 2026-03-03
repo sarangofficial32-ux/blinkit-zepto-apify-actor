@@ -88,13 +88,24 @@ export async function scrapeZepto(searchQuery, maxItems, proxyConfig = null) {
             const products = await extractProducts();
 
             let newAdded = 0;
+            const newProductsToPush = [];
             for (const p of products) {
                 if (results.length >= maxItems) break;
                 const key = p.url || `${p.name}|${p.weight}`;
                 if (!seenUrls.has(key)) {
                     seenUrls.add(key);
                     results.push(p);
+                    newProductsToPush.push(p);
                     newAdded++;
+                }
+            }
+
+            // Immediately map data into Apify output instead of waiting for the scrape to finish
+            if (newProductsToPush.length > 0) {
+                try {
+                    await Actor.pushData(newProductsToPush);
+                } catch (e) {
+                    console.log("Failed to push to Apify Dataset (local run?):", e.message);
                 }
             }
 

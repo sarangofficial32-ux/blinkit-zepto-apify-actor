@@ -104,10 +104,21 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
             });
 
             let newAdded = 0;
+            const newProductsToPush = [];
             for (const p of products) {
                 if (!results.find(e => e.name === p.name && e.weight === p.weight)) {
                     results.push(p);
+                    newProductsToPush.push(p);
                     newAdded++;
+                }
+            }
+
+            // Immediately map data into Apify output instead of waiting for the scrape to finish
+            if (newProductsToPush.length > 0) {
+                try {
+                    await Actor.pushData(newProductsToPush);
+                } catch (e) {
+                    console.log("Failed to push to Apify Dataset (local run?):", e.message);
                 }
             }
 
