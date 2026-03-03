@@ -1,0 +1,62 @@
+{
+    "actorSpecification": 1,
+    "name": "blinkit-zepto-scraper",
+    "title": "Blinkit & Zepto Product Scraper",
+    "description": "Scrapes product search results from Blinkit and Zepto for any keyword. Returns 250-300 products per platform including name, price, weight, image, and URL.",
+    "version": "1.0.0",
+    "buildTag": "latest",
+    "dockerfile": "../Dockerfile",
+    "readme": "../README.md",
+    "input": "./INPUT_SCHEMA.json",
+    "storages": {
+        "dataset": {
+            "actorSpecification": 1,
+            "title": "Scraped Products",
+            "description": "Products scraped from Blinkit and Zepto",
+            "views": {
+                "overview": {
+                    "title": "Overview",
+                    "transformation": {
+                        "fields": [
+                            "platform",
+                            "name",
+                            "price",
+                            "weight",
+                            "url",
+                            "image"
+                        ]
+                    },
+                    "display": {
+                        "component": "table",
+                        "properties": {
+                            "platform": {
+                                "label": "Platform",
+                                "format": "text"
+                            },
+                            "name": {
+                                "label": "Product Name",
+                                "format": "text"
+                            },
+                            "price": {
+                                "label": "Price",
+                                "format": "text"
+                            },
+                            "weight": {
+                                "label": "Weight/Pack",
+                                "format": "text"
+                            },
+                            "url": {
+                                "label": "URL",
+                                "format": "link"
+                            },
+                            "image": {
+                                "label": "Image",
+                                "format": "image"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

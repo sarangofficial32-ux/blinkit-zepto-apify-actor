@@ -1,0 +1,54 @@
+{
+    "title": "Blinkit & Zepto Product Scraper",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "searchQuery": {
+            "title": "Search Query",
+            "type": "string",
+            "description": "The product or category keyword to search for (e.g. 'milk', 'chips', 'biscuit')",
+            "editor": "textfield",
+            "prefill": "milk"
+        },
+        "platforms": {
+            "title": "Platforms to Scrape",
+            "type": "array",
+            "description": "Which platforms to scrape. Defaults to both Blinkit and Zepto.",
+            "editor": "select",
+            "prefill": [
+                "blinkit",
+                "zepto"
+            ],
+            "items": {
+                "type": "string",
+                "enum": [
+                    "blinkit",
+                    "zepto"
+                ]
+            },
+            "default": [
+                "blinkit",
+                "zepto"
+            ]
+        },
+        "location": {
+            "title": "Delivery Location (Blinkit)",
+            "type": "string",
+            "description": "Delivery location for Blinkit (e.g. 'Connaught Place, New Delhi'). Zepto uses Mumbai by default.",
+            "editor": "textfield",
+            "prefill": "Connaught Place, New Delhi"
+        },
+        "maxItems": {
+            "title": "Max Items per Platform",
+            "type": "integer",
+            "description": "Maximum number of products to scrape from each platform (1-500).",
+            "minimum": 1,
+            "maximum": 500,
+            "default": 250,
+            "prefill": 250
+        }
+    },
+    "required": [
+        "searchQuery"
+    ]
+}

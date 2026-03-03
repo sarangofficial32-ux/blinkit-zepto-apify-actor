@@ -1,0 +1,9 @@
+{
+    "name": "blinkit-zepto-scraper",
+    "version": "1.0.0",
+    "buildTag": "latest",
+    "env": null,
+    "dockerfile": "./Dockerfile",
+    "readme": "./README.md",
+    "input": "./.actor/INPUT_SCHEMA.json"
+}
