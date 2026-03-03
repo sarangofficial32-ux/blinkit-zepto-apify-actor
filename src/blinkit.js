@@ -69,7 +69,10 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
         while (results.length < maxItems && retries < 15) {
             const products = await page.$$eval('div[data-pf="reset"]', (cards) => {
                 return cards.map(c => {
-                    const imageElem = c.querySelector('img[alt]');
+                    const imgs = Array.from(c.querySelectorAll('img'));
+                    let imageElem = imgs.find(img => (img.getAttribute('data-src') || img.src || '').includes('grofers'));
+                    if (!imageElem) imageElem = imgs[0];
+
                     if (!imageElem && !(c.innerText || '').includes('ADD')) return null;
 
                     const name = c.querySelector(
@@ -81,7 +84,10 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
                     let price = 'No price';
                     for (const el of priceElems) {
                         const txt = el.innerText ? el.innerText.trim() : '';
-                        if (txt.startsWith('₹')) { price = txt; break; }
+                        if (txt.startsWith('₹')) {
+                            price = txt.split('\n')[0];
+                            if (price) break;
+                        }
                     }
 
                     const weight = c.querySelector(
@@ -89,7 +95,13 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
                     )?.innerText?.trim() || 'No weight';
 
                     const image = imageElem?.getAttribute('data-src') || imageElem?.src || '';
-                    const url = c.closest('a')?.href || '';
+
+                    let idStr = c.getAttribute('id');
+                    if (!idStr) {
+                        const childWithId = c.querySelector('[id]');
+                        if (childWithId) idStr = childWithId.getAttribute('id');
+                    }
+                    const url = idStr ? `https://blinkit.com/prn/-/prid/${idStr}` : '';
                     return { platform: 'Blinkit', name, price, weight, image, url };
                 }).filter(Boolean);
             });
