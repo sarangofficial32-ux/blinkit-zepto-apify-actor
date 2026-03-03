@@ -1,13 +1,9 @@
 import { chromium } from 'playwright';
 
-/**
- * Zepto scraper using the correct ?query= URL param (not ?q=).
- * The ?query= param returns 30+ products initially and loads 100-200+ via scroll.
- */
-export async function scrapeZepto(searchQuery, maxItems, proxyUrl = null) {
+export async function scrapeZepto(searchQuery, maxItems, proxyConfig = null) {
     const launchOptions = { headless: true };
-    if (proxyUrl) {
-        launchOptions.proxy = { server: proxyUrl };
+    if (proxyConfig) {
+        launchOptions.proxy = proxyConfig; // { server, username, password }
     }
 
     const browser = await chromium.launch(launchOptions);
@@ -15,8 +11,7 @@ export async function scrapeZepto(searchQuery, maxItems, proxyUrl = null) {
         userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
         viewport: { width: 1920, height: 1080 },
         locale: 'en-IN',
-        geolocation: { longitude: 72.8777, latitude: 19.0760 }, // Mumbai
-        permissions: ['geolocation'],
+        ignoreHTTPSErrors: true,
     });
     const page = await context.newPage();
     const results = [];
@@ -49,7 +44,7 @@ export async function scrapeZepto(searchQuery, maxItems, proxyUrl = null) {
     try {
         // Set location via homepage UI
         console.log(`Zepto: Navigating to homepage to set location`);
-        await page.goto(`https://www.zeptonow.com`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(`https://www.zeptonow.com`, { waitUntil: 'domcontentloaded', timeout: 90000 });
 
         try {
             await page.waitForTimeout(3000);
@@ -68,13 +63,13 @@ export async function scrapeZepto(searchQuery, maxItems, proxyUrl = null) {
                 }
             }
         } catch (e) {
-            console.log('Zepto: Location set failed: ' + e.message);
+            console.log('Zepto: Location set skipped: ' + e.message);
         }
 
         // Use ?query= (NOT ?q=) - returns full paginated results
         const searchUrl = `https://www.zepto.com/search?query=${encodeURIComponent(searchQuery)}`;
         console.log(`Zepto: Navigating to ${searchUrl}`);
-        await page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 60000 });
+        await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
         await page.waitForTimeout(3000);
 
         let lastCount = 0;

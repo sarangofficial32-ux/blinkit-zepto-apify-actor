@@ -1,9 +1,9 @@
 import { chromium } from 'playwright';
 
-export async function scrapeBlinkit(searchQuery, location, maxItems, proxyUrl = null) {
+export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig = null) {
     const launchOptions = { headless: true };
-    if (proxyUrl) {
-        launchOptions.proxy = { server: proxyUrl };
+    if (proxyConfig) {
+        launchOptions.proxy = proxyConfig; // { server, username, password }
     }
 
     const browser = await chromium.launch(launchOptions);
@@ -11,14 +11,13 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyUrl = 
         userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
         viewport: { width: 1920, height: 1080 },
         locale: 'en-IN',
-        geolocation: { longitude: 77.2090, latitude: 28.6139 }, // New Delhi
-        permissions: ['geolocation'],
+        ignoreHTTPSErrors: true,
     });
     const page = await context.newPage();
     const results = [];
 
     try {
-        await page.goto("https://blinkit.com/", { waitUntil: "domcontentloaded", timeout: 60000 });
+        await page.goto("https://blinkit.com/", { waitUntil: "domcontentloaded", timeout: 90000 });
         await page.waitForTimeout(3000);
 
         // Location modal handling
@@ -46,7 +45,7 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyUrl = 
         }
 
         console.log(`Blinkit: Navigating to search URL for "${searchQuery}"`);
-        await page.goto(`https://blinkit.com/s/?q=${encodeURIComponent(searchQuery)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+        await page.goto(`https://blinkit.com/s/?q=${encodeURIComponent(searchQuery)}`, { waitUntil: "domcontentloaded", timeout: 90000 });
         await page.waitForTimeout(3000);
 
         let previousHeight = 0;
