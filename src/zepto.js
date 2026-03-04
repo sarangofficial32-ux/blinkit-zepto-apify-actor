@@ -122,6 +122,14 @@ export async function scrapeZepto(searchQuery, maxItems, proxyConfig = null) {
             }
 
             await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+            // Live View / Debug update for Apify Console
+            try {
+                const screenshot = await page.screenshot();
+                await Actor.setValue('LIVE_VIEW', screenshot, { contentType: 'image/png' });
+            } catch (e) {
+                // Ignore live view errors
+            }
+
             await page.waitForTimeout(1500);
             await scrollCount++;
         }

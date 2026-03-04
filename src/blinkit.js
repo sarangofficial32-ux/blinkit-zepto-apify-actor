@@ -30,7 +30,8 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
     const results = [];
 
     try {
-        await page.goto("https://blinkit.com/", { waitUntil: "domcontentloaded", timeout: 90000 });
+        console.log(`Blinkit: Navigating to search URL for "${searchQuery}"`);
+        await page.goto(`https://blinkit.com/s/?q=${encodeURIComponent(searchQuery)}`, { waitUntil: "domcontentloaded", timeout: 90000 });
         await page.waitForTimeout(3000);
 
         // Location modal handling
@@ -49,16 +50,17 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
                 await page.keyboard.press("Backspace");
                 await page.waitForTimeout(1500);
                 await page.click('div.LocationSearchList__LocationListContainer-sc-93rfr7-0 > div');
-                await page.waitForTimeout(2000);
+                await page.waitForTimeout(3000); // Give it time to refresh products after location change
                 console.log('Blinkit: Location set to', location);
             }
         } catch (e) {
             console.log("Blinkit: Could not set location: " + e.message);
         }
 
-        console.log(`Blinkit: Navigating to search URL for "${searchQuery}"`);
-        await page.goto(`https://blinkit.com/s/?q=${encodeURIComponent(searchQuery)}`, { waitUntil: "domcontentloaded", timeout: 90000 });
-        await page.waitForTimeout(3000);
+        // Wait for product nodes to show up
+        await page.waitForSelector('div[data-pf="reset"]', { timeout: 15000 }).catch(() => {
+            console.log('Blinkit: Product selector not found within 15s');
+        });
 
         let previousCount = 0;
         let scrollCount = 0;
@@ -128,12 +130,23 @@ export async function scrapeBlinkit(searchQuery, location, maxItems, proxyConfig
             // Hover over the last product card to ensure our scroll context is correct
             await page.locator('div[data-pf="reset"]').last().hover({ timeout: 2000 }).catch(() => { });
 
-            // Use native Playwright inputs for more reliable scroll event firing
-            await page.mouse.wheel(0, 3000);
-            await page.keyboard.press('PageDown');
+            // Evaluate scroll to trigger dynamic loading more reliably across headless environments
+            await page.evaluate(() => window.scrollBy(0, 1500));
             await page.waitForTimeout(500);
-            await page.keyboard.press('PageDown');
+            await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
             await page.waitForTimeout(1500);
+
+            // Also try pressing PageDown as a fallback
+            await page.keyboard.press('PageDown');
+            await page.waitForTimeout(1000);
+
+            // Live View / Debug update for Apify Console
+            try {
+                const screenshot = await page.screenshot();
+                await Actor.setValue('LIVE_VIEW', screenshot, { contentType: 'image/png' });
+            } catch (e) {
+                // Ignore live view errors
+            }
 
             // Check if new products were appended rather than relying on body height
             if (newAdded === 0) {
